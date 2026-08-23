@@ -48,21 +48,73 @@ async function send() {
   appendMessage("user", text);
   history.push({ role: "user", content: text });
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password, session_id: sessionId, history }),
-  });
+  // Create a message div for the assistant's streaming response
+  const log = document.getElementById("log");
+  const assistantDiv = document.createElement("div");
+  assistantDiv.className = "msg assistant";
+  assistantDiv.textContent = "🦆 : ";
+  log.appendChild(assistantDiv);
+  log.scrollTop = log.scrollHeight;
 
-  if (!res.ok) {
-    const err = await res.json();
-    appendMessage("assistant", "⚠️ " + (err.detail || "Erreur serveur"));
-    return;
+  let fullResponse = "";
+  let hasError = false;
+
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password, session_id: sessionId, history }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      assistantDiv.textContent = "🦆 : ⚠️ " + (err.detail || "Erreur serveur");
+      hasError = true;
+      return;
+    }
+
+    // Read the streaming response
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const content = line.slice(6);
+
+          if (content === "[DONE]") {
+            // Stream finished
+            break;
+          } else if (content.startsWith("[ERROR]")) {
+            assistantDiv.textContent += "\n⚠️ " + content.slice(7);
+            hasError = true;
+            break;
+          } else if (content) {
+            // Append streamed content
+            fullResponse += content;
+            assistantDiv.textContent = "🦆 : " + fullResponse;
+            log.scrollTop = log.scrollHeight;
+          }
+        }
+      }
+    }
+
+    // Add to history only if successful
+    if (!hasError && fullResponse) {
+      history.push({ role: "assistant", content: fullResponse });
+    }
+
+  } catch (err) {
+    assistantDiv.textContent = "🦆 : ⚠️ Erreur de connexion: " + err.message;
   }
-
-  const data = await res.json();
-  appendMessage("assistant", data.reply);
-  history.push({ role: "assistant", content: data.reply });
 }
 
 function appendMessage(role, content) {

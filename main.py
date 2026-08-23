@@ -16,7 +16,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from mistralai.client import Mistral
 from pydantic import BaseModel
@@ -252,65 +252,72 @@ async def chat(req: ChatRequest):
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += [{"role": m.role, "content": m.content} for m in req.history]
 
-    # Try primary model
+    logger.info(f"Attempting primary model ({MODEL_NAME}) for session {req.session_id}")
+
+    # Return streaming response with primary model
+    # Fallback will be attempted inside the generator if needed
+    return StreamingResponse(
+        _stream_with_fallback(MODEL_NAME, messages, req.session_id),
+        media_type="text/event-stream"
+    )
+
+
+def _stream_with_fallback(model: str, messages: list, session_id: str):
+    """Try model, fallback to FALLBACK_MODEL on rate limit."""
     try:
-        logger.info(f"Attempting primary model ({MODEL_NAME}) for session {req.session_id}")
-        resp = client.chat.complete(
-            model=MODEL_NAME,
+        response_stream = client.chat.stream(
+            model=model,
             messages=messages,
             max_tokens=MAX_TOKENS_PER_REPLY,
             temperature=0.3,
         )
-        logger.info(f"Success with primary model for session {req.session_id}")
-        return {"reply": resp.choices[0].message.content}
+
+        for chunk in response_stream:
+            if chunk.data.choices[0].delta.content:
+                content = chunk.data.choices[0].delta.content
+                yield f"data: {content}\n\n"
+
+        logger.info(f"Stream completed successfully with {model} for session {session_id}")
+        yield "data: [DONE]\n\n"
 
     except Exception as e:
         error_str = str(e).lower()
-        status_code = getattr(e, "status_code", None)
 
-        # Check if it's a rate limit error (429)
-        if "429" in error_str or "rate" in error_str or status_code == 429:
+        # Try fallback on rate limit
+        if "429" in error_str or "rate" in error_str:
             logger.warning(
-                f"Primary model rate limited ({MODEL_NAME}) for session {req.session_id}. "
-                f"Attempting fallback model ({FALLBACK_MODEL})"
+                f"Model {model} rate limited for session {session_id}. Trying fallback {FALLBACK_MODEL}"
             )
             try:
-                resp = client.chat.complete(
+                response_stream = client.chat.stream(
                     model=FALLBACK_MODEL,
                     messages=messages,
                     max_tokens=MAX_TOKENS_PER_REPLY,
                     temperature=0.3,
                 )
-                logger.info(f"Success with fallback model for session {req.session_id}")
-                return {"reply": resp.choices[0].message.content}
-            except Exception as fallback_error:
-                logger.error(
-                    f"Fallback model also failed for session {req.session_id}: {fallback_error}"
-                )
-                raise HTTPException(
-                    status_code=503,
-                    detail="Service Mistral temporairement saturé. Veuillez réessayer dans quelques minutes.",
-                )
 
-        # Check if it's an authentication/quota error (401, 402, 403)
+                for chunk in response_stream:
+                    if chunk.data.choices[0].delta.content:
+                        content = chunk.data.choices[0].delta.content
+                        yield f"data: {content}\n\n"
+
+                logger.info(f"Fallback stream completed for session {session_id}")
+                yield "data: [DONE]\n\n"
+                return
+
+            except Exception as fallback_error:
+                logger.error(f"Fallback also failed: {fallback_error}")
+                yield f"data: [ERROR] Service Mistral temporairement saturé\n\n"
+
+        # Auth/quota errors
         elif any(code in error_str for code in ["401", "402", "403", "auth", "quota", "billing"]):
-            logger.error(
-                f"Authentication/Quota error with Mistral API (session {req.session_id}): {e}"
-            )
-            raise HTTPException(
-                status_code=503,
-                detail="Erreur de configuration Mistral (authentification ou quota). Contactez l'administrateur.",
-            )
+            logger.error(f"Auth/Quota error for session {session_id}: {e}")
+            yield f"data: [ERROR] Erreur de configuration (authentification ou quota)\n\n"
 
         # Other errors
         else:
-            logger.error(
-                f"Unexpected error with Mistral API (session {req.session_id}): {type(e).__name__}: {e}"
-            )
-            raise HTTPException(
-                status_code=503,
-                detail="Erreur interne du service Mistral. Veuillez réessayer.",
-            )
+            logger.error(f"Unexpected error for session {session_id}: {e}")
+            yield f"data: [ERROR] Erreur du service Mistral\n\n"
 
 
 @app.get("/health")
