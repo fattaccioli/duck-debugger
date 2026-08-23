@@ -20,6 +20,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from mistralai.client import Mistral
 from pydantic import BaseModel
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 # Configure logging
 logging.basicConfig(
@@ -42,6 +44,9 @@ FALLBACK_MODEL = os.environ.get("FALLBACK_MODEL", "mistral-small-latest")
 MAX_REQUESTS_PER_DAY_PER_SESSION = int(os.environ.get("MAX_REQUESTS_PER_DAY_PER_SESSION", "50"))
 MAX_REQUESTS_PER_DAY_GLOBAL = int(os.environ.get("MAX_REQUESTS_PER_DAY_GLOBAL", "500"))
 MAX_TOKENS_PER_REPLY = int(os.environ.get("MAX_TOKENS_PER_REPLY", "400"))
+
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+FEEDBACK_EMAIL = "jacques.fattaccioli@ens.psl.eu"
 
 BASE_DIR = Path(__file__).parent
 PROMPTS_DIR = BASE_DIR / "prompts"
@@ -437,6 +442,12 @@ class ChatRequest(BaseModel):
     history: list[Message]
 
 
+class FeedbackRequest(BaseModel):
+    name: str
+    email: str
+    message: str
+
+
 # --------------------------------------------------------------------------
 # Endpoints
 # --------------------------------------------------------------------------
@@ -575,6 +586,61 @@ async def admin_status(password: str = None):
             "fallback": FALLBACK_MODEL,
         },
     }
+
+
+@app.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    """Submit feedback via email (tries SendGrid, falls back to local file)."""
+    import json
+
+    feedback_data = {
+        "timestamp": datetime.now().isoformat(),
+        "name": req.name,
+        "email": req.email,
+        "message": req.message
+    }
+
+    # Try SendGrid if configured
+    if SENDGRID_API_KEY:
+        try:
+            message = Mail(
+                from_email="duck-debugger@ens.psl.eu",
+                to_emails=FEEDBACK_EMAIL,
+                subject=f"Feedback Duck Debugger: {req.name}",
+                html_content=f"""
+                <strong>De:</strong> {req.name} ({req.email})<br><br>
+                <strong>Message:</strong><br>
+                {req.message.replace(chr(10), '<br>')}
+                """
+            )
+
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            response = sg.send(message)
+
+            logger.info(f"Feedback sent via SendGrid from {req.email}")
+            return {"status": "success", "message": "Merci pour votre feedback !"}
+
+        except Exception as e:
+            logger.warning(f"SendGrid failed ({e}), falling back to local storage")
+
+    # Fallback: save to local JSON file
+    try:
+        feedback_dir = BASE_DIR / "feedback"
+        feedback_dir.mkdir(exist_ok=True)
+
+        feedback_file = feedback_dir / "feedback.jsonl"
+        with open(feedback_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(feedback_data, ensure_ascii=False) + "\n")
+
+        logger.info(f"Feedback saved locally from {req.email}")
+        return {"status": "success", "message": "Merci pour votre feedback !"}
+
+    except Exception as e:
+        logger.error(f"Failed to save feedback: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Erreur lors de l'enregistrement du feedback. Réessayez plus tard."
+        )
 
 
 # Sert la page de chat statique

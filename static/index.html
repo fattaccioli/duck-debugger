@@ -2,31 +2,238 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Duck Debugger — Python 101</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
-  #log { border: 1px solid #ccc; border-radius: 8px; padding: 12px; height: 420px; overflow-y: auto; margin-bottom: 12px; background: #fafafa; }
-  .msg { margin-bottom: 16px; white-space: pre-wrap; word-wrap: break-word; line-height: 1.5; font-size: 14px; }
-  .user { color: #1a4b8c; font-weight: 500; }
-  .assistant { color: #333; background: #fff; padding: 10px; border-left: 3px solid #2563eb; border-radius: 4px; }
-  textarea { width: 100%; height: 90px; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f8f9fa;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+  header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+
+  header h1 { font-size: 28px; margin-bottom: 10px; }
+  header p { font-size: 14px; opacity: 0.9; }
+
+  .resources {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  .resource-link {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 16px;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    color: #667eea;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .resource-link:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+  }
+
+  #log {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    height: 420px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    background: white;
+  }
+
+  .msg {
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+
+  .user {
+    color: #667eea;
+    font-weight: 500;
+    background: #f0f4ff;
+    padding: 10px;
+    border-radius: 6px;
+  }
+
+  .assistant {
+    color: #333;
+    background: #fff;
+    padding: 12px;
+    border-left: 3px solid #667eea;
+    border-radius: 4px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 100px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: system-ui, sans-serif;
+    resize: vertical;
+  }
+
+  button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  button:hover { background: #5568d3; }
+
   #gate { margin-bottom: 20px; }
-  button { margin-top: 8px; padding: 8px 16px; cursor: pointer; }
+
+  .gate-form {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .gate-form label { display: block; margin-bottom: 12px; font-weight: 500; }
+  .gate-form input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .feedback-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+    border: 1px solid #e0e0e0;
+  }
+
+  .feedback-section h3 { margin-bottom: 12px; color: #667eea; }
+  .feedback-form { display: none; }
+  .feedback-form.show { display: block; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px; }
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+  }
+
+  .feedback-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .btn-secondary {
+    background: #ddd;
+    color: #333;
+  }
+
+  .btn-secondary:hover { background: #ccc; }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    font-size: 12px;
+    color: #666;
+  }
+
+  .alert { padding: 12px; border-radius: 6px; margin-bottom: 12px; }
+  .alert.success { background: #d4edda; color: #155724; }
+  .alert.error { background: #f8d7da; color: #721c24; }
 </style>
 </head>
 <body>
-<h2>🦆 Duck Debugger — Python 101</h2>
-<p>Décrivez votre bug ou collez votre code + le message d'erreur. Le canard ne vous donnera jamais la solution directement — il vous aidera à la trouver.</p>
+<div class="container">
+  <header>
+    <h1>🦆 Duck Debugger</h1>
+    <p>Votre assistant de débogage socratique pour Python 101</p>
+  </header>
 
-<div id="gate">
-  <label>Mot de passe de classe : <input id="password" type="password"></label>
-  <button onclick="unlock()">Entrer</button>
-</div>
+  <div class="resources">
+    <a href="https://claude.ai/code/artifact/fb9c0797-46bd-4bb0-a388-b28286c555ea" class="resource-link" target="_blank">📚 Carte de Référence</a>
+    <a href="https://cs50.ai/" class="resource-link" target="_blank">🎓 Inspiré par CS50.AI</a>
+  </div>
 
-<div id="chatbox" style="display:none">
-  <div id="log"></div>
-  <textarea id="input" placeholder="Décrivez votre problème..."></textarea>
-  <button onclick="send()">Envoyer</button>
+  <div id="gate" class="gate-form">
+    <h3>Accès à Duck Debugger</h3>
+    <div class="form-group">
+      <label for="password">Mot de passe de classe</label>
+      <input id="password" type="password" placeholder="Entrez le mot de passe fourni en cours">
+    </div>
+    <button onclick="unlock()">Entrer</button>
+  </div>
+
+  <div id="chatbox" style="display:none">
+    <p style="margin-bottom: 16px; color: #666;">Décrivez votre problème ou collez votre code + le message d'erreur. Duck vous posera des questions pour vous aider à trouver la solution.</p>
+    <div id="log"></div>
+    <textarea id="input" placeholder="Décrivez votre problème..."></textarea>
+    <button onclick="send()">Envoyer</button>
+
+    <div class="feedback-section">
+      <h3>💬 Nous aider à améliorer</h3>
+      <button onclick="toggleFeedback()" class="btn-secondary">Envoyer une suggestion</button>
+
+      <div id="feedbackForm" class="feedback-form">
+        <div class="form-group">
+          <label for="feedbackName">Votre nom (optionnel)</label>
+          <input id="feedbackName" type="text" placeholder="Votre prénom">
+        </div>
+        <div class="form-group">
+          <label for="feedbackEmail">Votre email (optionnel)</label>
+          <input id="feedbackEmail" type="email" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label for="feedbackMessage">Votre suggestion ou commentaire</label>
+          <textarea id="feedbackMessage" placeholder="Dites-nous comment améliorer Duck Debugger..." style="min-height: 120px;"></textarea>
+        </div>
+        <div class="feedback-buttons">
+          <button class="btn-secondary" onclick="toggleFeedback()">Annuler</button>
+          <button onclick="submitFeedback()">Envoyer</button>
+        </div>
+        <div id="feedbackAlert"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>🦆 Duck Debugger — Outil pédagogique pour Python 101 (Sorbonne Université)</p>
+  </footer>
 </div>
 
 <script>
@@ -124,6 +331,51 @@ function appendMessage(role, content) {
   div.textContent = (role === "user" ? "Vous : " : "🦆 : ") + content;
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
+}
+
+function toggleFeedback() {
+  const form = document.getElementById("feedbackForm");
+  form.classList.toggle("show");
+  if (form.classList.contains("show")) {
+    document.getElementById("feedbackName").focus();
+  }
+}
+
+async function submitFeedback() {
+  const name = document.getElementById("feedbackName").value.trim();
+  const email = document.getElementById("feedbackEmail").value.trim();
+  const message = document.getElementById("feedbackMessage").value.trim();
+  const alertDiv = document.getElementById("feedbackAlert");
+
+  if (!message) {
+    alertDiv.innerHTML = '<div class="alert error">Veuillez entrer une suggestion.</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch("/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name || "Anonyme",
+        email: email || "anonyme@example.com",
+        message
+      })
+    });
+
+    if (res.ok) {
+      alertDiv.innerHTML = '<div class="alert success">Merci pour votre suggestion ! ✅</div>';
+      document.getElementById("feedbackName").value = "";
+      document.getElementById("feedbackEmail").value = "";
+      document.getElementById("feedbackMessage").value = "";
+      setTimeout(() => toggleFeedback(), 1500);
+    } else {
+      const err = await res.json();
+      alertDiv.innerHTML = '<div class="alert error">Erreur : ' + (err.detail || "Impossible d\'envoyer la suggestion") + '</div>';
+    }
+  } catch (err) {
+    alertDiv.innerHTML = '<div class="alert error">Erreur de connexion : ' + err.message + '</div>';
+  }
 }
 </script>
 </body>
