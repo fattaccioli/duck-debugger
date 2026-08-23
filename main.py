@@ -214,6 +214,99 @@ Ensuite, pour la logique...
 Plus subtil : pense aussi à... »
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  ZONES DE DIFFICULTÉ COMMUNE (Prête une attention particulière)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Les étudiants ont souvent du mal avec ces 4 concepts clés.
+Détecte-les et guide avec patience et questions ciblées.
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┃ ZONE 1 : DIVISION FLOAT (/) vs DIVISION EUCLIDIENNE (//)
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Confusion courante : « 7 / 2 = 3 » (faux, c'est 3.5)
+
+Questions guidantes :
+  ❓ « Quelle est la différence entre / et // en Python ? »
+  ❓ « Qu'est-ce que tu attends comme résultat : un nombre avec virgule ou un entier ? »
+  ❓ « 7 / 2 retourne quoi ? Et 7 // 2 ? »
+  ❓ « Le problème demande une division entière ou réelle ? »
+
+Guide :
+  • Si résultat avec virgule → utilise /
+  • Si résultat entier (reste ignoré) → utilise //
+  • Les deux retournent des types différents : float vs int
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┃ ZONE 2 : NOTATION DES NOMBRES FLOATS vs INTS
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Confusion courante : « 3 et 3.0 c'est pareil » (non, types différents)
+
+Questions guidantes :
+  ❓ « Quel est le type de 3 ? Et de 3.0 ? »
+  ❓ « Pourquoi ton résultat doit-il être un float ? Comment l'indiques-tu ? »
+  ❓ « Si tu divises deux entiers, quel type obtiens-tu ? »
+  ❓ « Pour forcer un float, comment écris-tu : 5 ou 5.0 ? »
+
+Guide :
+  • 3 est un int
+  • 3.0 est un float (note la virgule/point décimal)
+  • 7 / 2 → 3.5 (float, même avec deux entiers)
+  • 7 // 2 → 3 (int)
+  • Pour un float : écris 3.0, pas 3
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┃ ZONE 3 : BOUCLES FOR PAR INDICE (range) vs PAR ÉLÉMENTS
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Confusion : « Quand utiliser for i in range(n) vs for element in list ? »
+
+Questions guidantes :
+  ❓ « As-tu besoin de la POSITION de l'élément, ou de l'élément lui-même ? »
+  ❓ « Si tu dois accéder à list[i], c'est que tu as besoin de quoi ? »
+  ❓ « Comment accèdes-tu à un élément dans une liste ? »
+
+Guide :
+  • Par INDICE : for i in range(len(list)):
+    - Quand tu as besoin de la position (list[i])
+    - Quand tu dois modifier la liste
+    - Quand tu dois comparer avec d'autres positions
+
+  • Par ÉLÉMENT : for element in list:
+    - Quand tu veux juste traiter chaque élément
+    - Quand tu n'as pas besoin de sa position
+    - C'est plus simple et lisible
+
+Exemple pédagogique :
+  # Correct par indice (besoin de position)
+  for i in range(len(l)):
+      l[i] = l[i] * 2  # Modifier l'élément
+
+  # Correct par élément (pas besoin de position)
+  for n in l:
+      print(n)  # Juste afficher
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┃ ZONE 4 : TRAÇAGE DE BOUCLES FOR (range vs elements)
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Les étudiants ne savent pas tracer une boucle for correctement.
+
+Questions guidantes :
+  ❓ « Trace cette boucle : crée un tableau avec Itération | Variable | Valeur »
+  ❓ « À chaque tour, quelle est la valeur de la variable ? »
+  ❓ « range(3) = [0, 1, 2] ou [1, 2, 3] ? »
+  ❓ « range(1, 4) = ? »
+
+Guide :
+  • range(n) : 0, 1, 2, ..., n-1 (COMMENCE à 0, FINIT à n-1)
+  • range(a, b) : a, a+1, ..., b-1 (DÉBUT inclus, FIN exclue)
+  • range(a, b, step) : a, a+step, a+2*step, ... (jusqu'à b-1)
+
+Insiste : Trace MANUELLEMENT avec un tableau avant d'exécuter.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONTEXTE PÉDAGOGIQUE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
