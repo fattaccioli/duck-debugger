@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carte de Référence – Python 101</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --bg: #ffffff;
+      --accent: #2563eb;
+      --border: #e5e7eb;
+      --code-bg: #f3f4f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --text: #e5e7eb;
+        --bg: #1f2937;
+        --accent: #60a5fa;
+        --border: #374151;
+        --code-bg: #111827;
+      }
+    }
+    :root[data-theme="dark"] {
+      --text: #e5e7eb;
+      --bg: #1f2937;
+      --accent: #60a5fa;
+      --border: #374151;
+      --code-bg: #111827;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Monaco", "Courier New", monospace;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      font-size: 0.95em;
+    }
+
+    h1 {
+      color: var(--accent);
+      border-bottom: 3px solid var(--accent);
+      padding-bottom: 0.5rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      color: var(--accent);
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--accent);
+      padding-left: 1rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 0.9em;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: var(--code-bg);
+      border-radius: 4px;
+      border-left: 4px solid var(--accent);
+    }
+
+    code {
+      background: rgba(37, 99, 235, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 2px;
+      font-family: "Monaco", "Courier New", monospace;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .card {
+      padding: 1rem;
+      background: var(--code-bg);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: bold;
+      background: var(--code-bg);
+    }
+
+    .example {
+      background: rgba(37, 99, 235, 0.05);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+      border-left: 3px solid var(--accent);
+      font-family: "Monaco", "Courier New", monospace;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .back-button {
+      display: inline-block;
+      margin-bottom: 2rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: opacity 0.2s;
+    }
+
+    .back-button:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+<a href="/" class="back-button">← Retour à Duck Debugger</a>
+
+<h1>🦆 Carte de Référence – Python 101</h1>
+<p class="subtitle">Sorbonne Université – UE LU1IN001 – Éléments de Programmation</p>
+
+<h2>📋 Types de Base</h2>
+<div class="section">
+  <table>
+    <tr>
+      <th>Type</th>
+      <th>Exemples</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><code>int</code></td>
+      <td><code>42, -5, 0</code></td>
+      <td>Nombres entiers</td>
+    </tr>
+    <tr>
+      <td><code>float</code></td>
+      <td><code>3.14, -2.5, 1e-3</code></td>
+      <td>Nombres à virgule flottante</td>
+    </tr>
+    <tr>
+      <td><code>bool</code></td>
+      <td><code>True, False</code></td>
+      <td>Booléens</td>
+    </tr>
+    <tr>
+      <td><code>str</code></td>
+      <td><code>'hello', "world"</code></td>
+      <td>Chaînes de caractères</td>
+    </tr>
+    <tr>
+      <td><code>None</code></td>
+      <td><code>None</code></td>
+      <td>Absence de valeur</td>
+    </tr>
+    <tr>
+      <td><code>list</code></td>
+      <td><code>[1, 2, 3]</code></td>
+      <td>Listes (homogènes, mutables)</td>
+    </tr>
+    <tr>
+      <td><code>tuple</code></td>
+      <td><code>(1, 2, 3)</code></td>
+      <td>N-uplets (immuables)</td>
+    </tr>
+    <tr>
+      <td><code>set</code></td>
+      <td><code>{1, 2, 3}</code></td>
+      <td>Ensembles (homogènes, sans doublons)</td>
+    </tr>
+    <tr>
+      <td><code>dict</code></td>
+      <td><code>{'a': 1, 'b': 2}</code></td>
+      <td>Dictionnaires (clé → valeur)</td>
+    </tr>
+  </table>
+</div>
+
+<h2>🔧 Opérations sur les Nombres</h2>
+<div class="grid">
+  <div class="card">
+    <strong>Arithmétique</strong>
+    <table>
+      <tr><td><code>a + b</code></td><td>Addition</td></tr>
+      <tr><td><code>a - b</code></td><td>Soustraction</td></tr>
+      <tr><td><code>a * b</code></td><td>Multiplication</td></tr>
+      <tr><td><code>a / b</code></td><td>Division (float)</td></tr>
+      <tr><td><code>a // b</code></td><td>Division entière</td></tr>
+      <tr><td><code>a % b</code></td><td>Modulo (reste)</td></tr>
+      <tr><td><code>a ** b</code></td><td>Puissance</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <strong>Comparaisons</strong>
+    <table>
+      <tr><td><code>a == b</code></td><td>Égal</td></tr>
+      <tr><td><code>a != b</code></td><td>Différent</td></tr>
+      <tr><td><code>a < b</code></td><td>Strictement inférieur</td></tr>
+      <tr><td><code>a > b</code></td><td>Strictement supérieur</td></tr>
+      <tr><td><code>a <= b</code></td><td>Inférieur ou égal</td></tr>
+      <tr><td><code>a >= b</code></td><td>Supérieur ou égal</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <strong>Logique</strong>
+    <table>
+      <tr><td><code>a and b</code></td><td>ET logique</td></tr>
+      <tr><td><code>a or b</code></td><td>OU logique</td></tr>
+      <tr><td><code>not a</code></td><td>NON logique</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>📝 Chaînes de Caractères</h2>
+<div class="section">
+  <table>
+    <tr>
+      <th>Opération</th>
+      <th>Exemple</th>
+      <th>Résultat</th>
+    </tr>
+    <tr>
+      <td>Longueur</td>
+      <td><code>len("hello")</code></td>
+      <td><code>5</code></td>
+    </tr>
+    <tr>
+      <td>Concaténation</td>
+      <td><code>"hello" + " " + "world"</code></td>
+      <td><code>"hello world"</code></td>
+    </tr>
+    <tr>
+      <td>Répétition</td>
+      <td><code>"ab" * 3</code></td>
+      <td><code>"ababab"</code></td>
+    </tr>
+    <tr>
+      <td>Indexation</td>
+      <td><code>"hello"[0]</code></td>
+      <td><code>"h"</code></td>
+    </tr>
+    <tr>
+      <td>Slicing</td>
+      <td><code>"hello"[1:4]</code></td>
+      <td><code>"ell"</code></td>
+    </tr>
+    <tr>
+      <td>Contient</td>
+      <td><code>"e" in "hello"</code></td>
+      <td><code>True</code></td>
+    </tr>
+  </table>
+</div>
+
+<h2>📚 Listes</h2>
+<div class="section">
+  <strong>Créer une liste :</strong>
+  <div class="example">
+n = []                    # Liste vide
+n = [1, 2, 3]             # Liste de nombres
+n = ["a", "b", "c"]       # Liste de chaînes (homogène!)
+  </div>
+
+  <strong>Opérations courantes :</strong>
+  <table>
+    <tr>
+      <th>Opération</th>
+      <th>Exemple</th>
+      <th>Effet</th>
+    </tr>
+    <tr>
+      <td>Accès</td>
+      <td><code>n[0]</code></td>
+      <td>Accède à l'élément d'index 0</td>
+    </tr>
+    <tr>
+      <td>Longueur</td>
+      <td><code>len(n)</code></td>
+      <td>Nombre d'éléments</td>
+    </tr>
+    <tr>
+      <td>Ajouter</td>
+      <td><code>n.append(4)</code></td>
+      <td>Ajoute à la fin (in-place)</td>
+    </tr>
+    <tr>
+      <td>Enlever</td>
+      <td><code>n.pop()</code></td>
+      <td>Retire et retourne le dernier</td>
+    </tr>
+    <tr>
+      <td>Inclus ?</td>
+      <td><code>1 in n</code></td>
+      <td>Booléen : élément dans la liste ?</td>
+    </tr>
+  </table>
+
+  <strong>Itération :</strong>
+  <div class="example">
+# Par élément
+for x in [1, 2, 3]:
+    print(x)
+
+# Par indice
+for i in range(len(n)):
+    print(n[i])
+  </div>
+</div>
+
+<h2>🔄 Boucles et Conditions</h2>
+<div class="section">
+  <strong>If / Elif / Else :</strong>
+  <div class="example">
+if x > 0:
+    print("positif")
+elif x < 0:
+    print("négatif")
+else:
+    print("zéro")
+  </div>
+
+  <strong>While :</strong>
+  <div class="example">
+i = 0
+while i < 10:
+    print(i)
+    i = i + 1
+  </div>
+
+  <strong>For :</strong>
+  <div class="example">
+# Parcourir une liste
+for element in [1, 2, 3]:
+    print(element)
+
+# Avec range
+for i in range(5):  # 0, 1, 2, 3, 4
+    print(i)
+  </div>
+</div>
+
+<h2>🎯 Fonctions</h2>
+<div class="section">
+  <strong>Signature et spécification :</strong>
+  <div class="example">
+def multiplier(x: int, y: int) -> int:
+    """Retourne le produit de deux entiers.
+    Préconditions: x et y doivent être des entiers.
+    """
+    return x * y
+  </div>
+
+  <strong>Appel :</strong>
+  <div class="example">
+result = multiplier(3, 4)  # result = 12
+  </div>
+
+  <strong>Return multiple :</strong>
+  <div class="example">
+def divmod_custom(a: int, b: int) -> tuple:
+    quotient = a // b
+    remainder = a % b
+    return quotient, remainder  # Retourne un n-uplet
+
+q, r = divmod_custom(17, 5)  # q = 3, r = 2
+  </div>
+</div>
+
+<h2>🔢 Range et Slicing</h2>
+<div class="section">
+  <strong>Range :</strong>
+  <table>
+    <tr>
+      <th>Expression</th>
+      <th>Résultat</th>
+    </tr>
+    <tr>
+      <td><code>range(5)</code></td>
+      <td>0, 1, 2, 3, 4</td>
+    </tr>
+    <tr>
+      <td><code>range(2, 5)</code></td>
+      <td>2, 3, 4</td>
+    </tr>
+    <tr>
+      <td><code>range(0, 10, 2)</code></td>
+      <td>0, 2, 4, 6, 8</td>
+    </tr>
+  </table>
+
+  <strong>Slicing (listes et chaînes) :</strong>
+  <table>
+    <tr>
+      <th>Expression</th>
+      <th>Exemple</th>
+      <th>Résultat</th>
+    </tr>
+    <tr>
+      <td><code>l[start:end]</code></td>
+      <td><code>[1,2,3,4,5][1:4]</code></td>
+      <td><code>[2, 3, 4]</code></td>
+    </tr>
+    <tr>
+      <td><code>l[:end]</code></td>
+      <td><code>"hello"[:3]</code></td>
+      <td><code>"hel"</code></td>
+    </tr>
+    <tr>
+      <td><code>l[start:]</code></td>
+      <td><code>[1,2,3][1:]</code></td>
+      <td><code>[2, 3]</code></td>
+    </tr>
+  </table>
+</div>
+
+<h2>🎲 Compréhensions de Listes</h2>
+<div class="section">
+  <div class="example">
+# Transformation : List[int] → List[int]
+doubles = [x * 2 for x in [1, 2, 3]]  # [2, 4, 6]
+
+# Filtrage : List[int] → List[int]
+pairs = [x for x in [1, 2, 3, 4, 5] if x % 2 == 0]  # [2, 4]
+
+# Transformation + filtrage
+result = [x * 2 for x in [1, 2, 3, 4, 5] if x > 2]  # [6, 8, 10]
+  </div>
+</div>
+
+<h2>📊 Dictionnaires et Ensembles</h2>
+<div class="grid">
+  <div class="card">
+    <strong>Dictionnaires</strong>
+    <div class="example">
+d = {'a': 1, 'b': 2}
+
+d['a']        # Accès : 1
+d['c'] = 3    # Ajout
+'a' in d      # Inclusion : True
+len(d)        # Taille : 3
+
+for k in d:   # Itérer sur clés
+    print(k, d[k])
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>Ensembles</strong>
+    <div class="example">
+s = {1, 2, 3}
+
+1 in s        # Inclusion : True
+s.add(4)      # Ajouter
+s.remove(2)   # Enlever
+len(s)        # Taille : 3
+
+# Opérations ensemblistes
+s1 & s2       # Intersection
+s1 | s2       # Union
+s1 - s2       # Différence
+    </div>
+  </div>
+</div>
+
+<h2>📝 Constantes Builtin</h2>
+<div class="section">
+  <table>
+    <tr>
+      <th>Nom</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><code>True</code></td>
+      <td><code>bool</code></td>
+      <td>Vrai</td>
+    </tr>
+    <tr>
+      <td><code>False</code></td>
+      <td><code>bool</code></td>
+      <td>Faux</td>
+    </tr>
+    <tr>
+      <td><code>None</code></td>
+      <td><code>NoneType</code></td>
+      <td>Absence de valeur</td>
+    </tr>
+  </table>
+</div>
+
+<h2>🔨 Fonctions Builtin Utiles</h2>
+<div class="section">
+  <table>
+    <tr>
+      <th>Fonction</th>
+      <th>Exemple</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><code>print()</code></td>
+      <td><code>print("hello")</code></td>
+      <td>Affiche à la console</td>
+    </tr>
+    <tr>
+      <td><code>input()</code></td>
+      <td><code>s = input("Nom: ")</code></td>
+      <td>Lit une ligne de l'utilisateur</td>
+    </tr>
+    <tr>
+      <td><code>len()</code></td>
+      <td><code>len([1, 2, 3])</code></td>
+      <td>Longueur</td>
+    </tr>
+    <tr>
+      <td><code>type()</code></td>
+      <td><code>type(42)</code></td>
+      <td>Type d'une valeur</td>
+    </tr>
+    <tr>
+      <td><code>int(), str(), float()</code></td>
+      <td><code>int("42")</code></td>
+      <td>Conversions de type</td>
+    </tr>
+    <tr>
+      <td><code>sum(), min(), max()</code></td>
+      <td><code>sum([1, 2, 3])</code></td>
+      <td>Agrégations</td>
+    </tr>
+    <tr>
+      <td><code>sorted()</code></td>
+      <td><code>sorted([3, 1, 2])</code></td>
+      <td>Retourne une liste triée</td>
+    </tr>
+    <tr>
+      <td><code>enumerate()</code></td>
+      <td><code>for i, x in enumerate(l):</code></td>
+      <td>Itère avec indices</td>
+    </tr>
+  </table>
+</div>
+
+<h2>⚠️ Pièges Courants</h2>
+<div class="section">
+  <strong>Division entière vs flottante :</strong>
+  <div class="example">
+7 / 2   # 3.5 (division flottante)
+7 // 2  # 3 (division entière)
+  </div>
+
+  <strong>Indexation : commence à 0 !</strong>
+  <div class="example">
+l = ['a', 'b', 'c']
+l[0]    # 'a' (premier élément)
+l[-1]   # 'c' (dernier élément)
+  </div>
+
+  <strong>Copie vs Référence :</strong>
+  <div class="example">
+a = [1, 2, 3]
+b = a           # b est une RÉFÉRENCE à a
+b.append(4)     # modifie aussi a!
+
+# Pour copier vraiment :
+c = a.copy()    # ou a[:]
+d = list(a)
+  </div>
+
+  <strong>Range s'arrête avant la fin :</strong>
+  <div class="example">
+range(5)        # 0, 1, 2, 3, 4 (pas 5!)
+range(1, 5)     # 1, 2, 3, 4 (pas 5!)
+  </div>
+
+  <strong>Les listes doivent être homogènes :</strong>
+  <div class="example">
+# BON
+nombres = [1, 2, 3]         # List[int]
+noms = ["Alice", "Bob"]     # List[str]
+
+# MAUVAIS (mélanges les types)
+mixte = [1, "deux", 3.0]    # ❌ À éviter!
+  </div>
+</div>
+
+<h2>✅ Structure Recommandée d'un Programme</h2>
+<div class="section">
+  <div class="example">
+def ma_fonction(x: int, y: int) -> int:
+    """
+    Calcule quelque chose.
+    Préconditions: x et y > 0
+    """
+    return x + y
+
+
+# Jeu de tests
+assert ma_fonction(2, 3) == 5
+assert ma_fonction(0, 0) == 0
+
+# Programme principal
+print(ma_fonction(10, 20))
+  </div>
+</div>
+
+<a href="/" class="back-button">← Retour à Duck Debugger</a>
+
+</body>
+</html>
