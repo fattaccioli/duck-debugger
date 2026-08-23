@@ -209,25 +209,33 @@ Quand tu identifies plusieurs problèmes, ordonne-les ainsi :
    - Cas limites non gérés (liste vide, division par zéro)
    - Propriétés d'algo (correction, terminaison, efficacité)
 
-🔴 CRITIQUE — FORMATAGE DES RÉPONSES :
-- CHAQUE étape doit être séparée par UNE LIGNE VIDE (c'est-à-dire deux "\n\n" de suite)
-- PAS de paragraphes collés les uns aux autres
-- LISIBILITÉ MAXIMALE pour les étudiants sur mobile/web
+🔴 CRITIQUE — FORMATAGE DES RÉPONSES (STRICTEMENT OBLIGATOIRE) :
 
-Format EXACT attendu (respecte strictement les sauts de ligne) :
+Tu dois ABSOLUMENT ajouter des LIGNES VIDES entre chaque section.
+Cela signifie DEUX retours à la ligne consécutifs (\n\n).
 
-D'abord, regarde cette erreur évidente :
-→ [DESCRIPTION DE L'ERREUR 1]
-[LIGNE VIDE]
-[LIGNE VIDE]
-Ensuite, pour la logique du code :
-→ [DESCRIPTION DE L'ERREUR 2]
-[LIGNE VIDE]
-[LIGNE VIDE]
-Plus subtil, pense aussi à ceci :
-→ [DESCRIPTION / QUESTION 3]
+EXEMPLE EXACT DE CE QUE TU DOIS FAIRE :
 
-⚠️  NE JAMAIS coller les réponses. Toujours deux "\n" entre sections.
+D'abord, regarde l'erreur évidente :
+→ Problème X
+
+[RETOUR À LA LIGNE ICI]
+[RETOUR À LA LIGNE ICI]
+
+Ensuite, pour la logique :
+→ Problème Y
+
+[RETOUR À LA LIGNE ICI]
+[RETOUR À LA LIGNE ICI]
+
+Plus subtil, pense aussi à :
+→ Question Z
+
+RÈGLE ABSOLUE :
+- Ne jamais mettre 2 paragraphes d'affilée sans une LIGNE VIDE entre eux
+- Les sections doivent être VISUELLEMENT SÉPARÉES
+- Pas de tirets --- ou d'autres caractères à la place d'une vraie ligne vide
+- Chaque "→" commence une section, suivi d'une ligne vide avant la section suivante
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  ZONES DE DIFFICULTÉ COMMUNE (Prête une attention particulière)
@@ -497,6 +505,8 @@ def _stream_with_fallback(model: str, messages: list, session_id: str):
         for chunk in response_stream:
             if chunk.data.choices[0].delta.content:
                 content = chunk.data.choices[0].delta.content
+                # Clean up excessive formatting artifacts
+                content = content.replace("---\n", "\n")
                 yield f"data: {content}\n\n"
 
         logger.info(f"Stream completed successfully with {model} for session {session_id}")
@@ -521,6 +531,8 @@ def _stream_with_fallback(model: str, messages: list, session_id: str):
                 for chunk in response_stream:
                     if chunk.data.choices[0].delta.content:
                         content = chunk.data.choices[0].delta.content
+                        # Clean up formatting artifacts
+                        content = content.replace("---\n", "\n")
                         yield f"data: {content}\n\n"
 
                 logger.info(f"Fallback stream completed for session {session_id}")
