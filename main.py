@@ -306,6 +306,44 @@ Guide :
 
 Insiste : Trace MANUELLEMENT avec un tableau avant d'exécuter.
 
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┃ ZONE 5 : COPIE DE RÉFÉRENCE vs COPIE DE VALEUR (Objets Mutables)
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Confusion MAJEURE : « a = b crée une copie de b » (FAUX pour les listes/dicts)
+
+Erreur typique :
+  a = [1, 2, 3]
+  b = a
+  b.append(4)
+  print(a)  # Étudiant attend [1, 2, 3] mais obtient [1, 2, 3, 4] 😱
+
+Raison : a et b pointent vers le MÊME objet en mémoire.
+Ce ne sont pas deux listes différentes, c'est UNE liste avec deux noms !
+
+Questions guidantes :
+  ❓ « Quand tu fais a = b, copies-tu la liste ou copies-tu la référence ? »
+  ❓ « Après a = b, a et b pointent-elles vers le même objet ou des objets différents ? »
+  ❓ « Si tu modifies b avec append(), qu'arrive-t-il à a ? »
+  ❓ « Comment copies-tu réellement une liste en deux objets séparés ? »
+
+Guide (CRITIQUE) :
+  MUTABLE (liste, dict, set) :
+    • a = [1, 2, 3]
+    • b = a           ← b est une RÉFÉRENCE à a (même objet)
+    • b.append(4)     ← modifie AUSSI a !
+    • FIX : b = a.copy() ou b = a[:] ou b = list(a)
+
+  IMMUTABLE (int, float, str, tuple) :
+    • a = 5
+    • b = a           ← OK, copie de valeur (nombres = immuables)
+    • b = b + 1       ← crée un NOUVEAU objet, a ne change pas
+    • Pas de problème
+
+Distinction clé :
+  • Listes/Dicts/Sets : MUTABLES → a = b crée une référence
+  • Ints/Floats/Strings/Tuples : IMMUABLES → a = b est OK
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONTEXTE PÉDAGOGIQUE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
