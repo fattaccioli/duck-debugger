@@ -19,14 +19,14 @@
 ### Variables d'environnement à configurer:
 
 ```env
-MISTRAL_API_KEY=b05CNIsh6P78xxaHrWEUWb4Oba1I1Fi9
-CLASS_PASSWORD=Agris154
+MISTRAL_API_KEY=your_mistral_api_key_here
+CLASS_PASSWORD=Python101SU
 MODEL_NAME=ministral-8b-latest
 FALLBACK_MODEL=mistral-small-latest
 MAX_REQUESTS_PER_DAY_PER_SESSION=50
 MAX_REQUESTS_PER_DAY_GLOBAL=500
 MAX_TOKENS_PER_REPLY=400
-SENDGRID_API_KEY=<votre-clé-sendgrid-valide>
+SENDGRID_API_KEY=  # Leave empty, use local fallback
 ```
 
 ⚠️ **IMPORTANT:** 
