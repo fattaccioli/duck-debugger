@@ -7,9 +7,11 @@ Design pédagogique :
 - Rate limiting simple par session pour contenir les coûts / le rate limit Mistral.
 """
 
+import logging
 import os
 import time
 from collections import defaultdict
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -18,6 +20,13 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from mistralai.client import Mistral
 from pydantic import BaseModel
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------
 # Configuration
@@ -30,7 +39,8 @@ CLASS_PASSWORD = os.environ.get("CLASS_PASSWORD", "changeme")
 MODEL_NAME = os.environ.get("MODEL_NAME", "ministral-8b-latest")
 FALLBACK_MODEL = os.environ.get("FALLBACK_MODEL", "mistral-small-latest")
 
-MAX_REQUESTS_PER_DAY = int(os.environ.get("MAX_REQUESTS_PER_DAY", "50"))
+MAX_REQUESTS_PER_DAY_PER_SESSION = int(os.environ.get("MAX_REQUESTS_PER_DAY_PER_SESSION", "50"))
+MAX_REQUESTS_PER_DAY_GLOBAL = int(os.environ.get("MAX_REQUESTS_PER_DAY_GLOBAL", "500"))
 MAX_TOKENS_PER_REPLY = int(os.environ.get("MAX_TOKENS_PER_REPLY", "400"))
 
 BASE_DIR = Path(__file__).parent
@@ -165,23 +175,51 @@ Distinctions critiques :
 """
 
 # --------------------------------------------------------------------------
-# Rate limiting très simple (en mémoire — suffisant pour un usage pédagogique
+# Rate limiting (en mémoire — suffisant pour un usage pédagogique
 # mono-instance ; passer à Redis/Upstash si vous déployez plusieurs instances)
 # --------------------------------------------------------------------------
 
-_usage: dict[str, list[float]] = defaultdict(list)
+_session_usage: dict[str, list[float]] = defaultdict(list)
+_global_usage: list[float] = []
 
 
-def check_rate_limit(session_id: str) -> None:
+def check_rate_limits(session_id: str) -> None:
+    """Check both per-session and global rate limits."""
     now = time.time()
     window_start = now - 24 * 3600
-    _usage[session_id] = [t for t in _usage[session_id] if t > window_start]
-    if len(_usage[session_id]) >= MAX_REQUESTS_PER_DAY:
+
+    # Clean up old entries
+    _session_usage[session_id] = [t for t in _session_usage[session_id] if t > window_start]
+    _global_usage.clear()
+    _global_usage.extend([t for t in _global_usage if t > window_start])
+
+    # Check per-session limit
+    if len(_session_usage[session_id]) >= MAX_REQUESTS_PER_DAY_PER_SESSION:
+        logger.warning(
+            f"Session {session_id} exceeded daily limit ({MAX_REQUESTS_PER_DAY_PER_SESSION})"
+        )
         raise HTTPException(
             status_code=429,
-            detail="Limite quotidienne atteinte pour cette session. Réessayez demain.",
+            detail=f"Limite quotidienne atteinte pour cette session ({MAX_REQUESTS_PER_DAY_PER_SESSION} requêtes/jour). Réessayez demain.",
         )
-    _usage[session_id].append(now)
+
+    # Check global limit
+    if len(_global_usage) >= MAX_REQUESTS_PER_DAY_GLOBAL:
+        logger.error(
+            f"GLOBAL LIMIT REACHED: {len(_global_usage)} requests today (max: {MAX_REQUESTS_PER_DAY_GLOBAL})"
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="Service temporairement indisponible. Le quota quotidien global a été atteint. Réessayez demain.",
+        )
+
+    # Record this request
+    _session_usage[session_id].append(now)
+    _global_usage.append(now)
+    logger.info(
+        f"Request allowed. Session {session_id}: {len(_session_usage[session_id])}/{MAX_REQUESTS_PER_DAY_PER_SESSION} | "
+        f"Global: {len(_global_usage)}/{MAX_REQUESTS_PER_DAY_GLOBAL}"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -206,30 +244,130 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 async def chat(req: ChatRequest):
     if req.password != CLASS_PASSWORD:
+        logger.warning(f"Failed auth attempt from session {req.session_id}")
         raise HTTPException(status_code=401, detail="Mot de passe de classe incorrect.")
 
-    check_rate_limit(req.session_id)
+    check_rate_limits(req.session_id)
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += [{"role": m.role, "content": m.content} for m in req.history]
 
+    # Try primary model
     try:
+        logger.info(f"Attempting primary model ({MODEL_NAME}) for session {req.session_id}")
         resp = client.chat.complete(
             model=MODEL_NAME,
             messages=messages,
             max_tokens=MAX_TOKENS_PER_REPLY,
             temperature=0.3,
         )
-    except Exception:
-        # Fallback si le modèle principal est rate-limité / indisponible
-        resp = client.chat.complete(
-            model=FALLBACK_MODEL,
-            messages=messages,
-            max_tokens=MAX_TOKENS_PER_REPLY,
-            temperature=0.3,
-        )
+        logger.info(f"Success with primary model for session {req.session_id}")
+        return {"reply": resp.choices[0].message.content}
 
-    return {"reply": resp.choices[0].message.content}
+    except Exception as e:
+        error_str = str(e).lower()
+        status_code = getattr(e, "status_code", None)
+
+        # Check if it's a rate limit error (429)
+        if "429" in error_str or "rate" in error_str or status_code == 429:
+            logger.warning(
+                f"Primary model rate limited ({MODEL_NAME}) for session {req.session_id}. "
+                f"Attempting fallback model ({FALLBACK_MODEL})"
+            )
+            try:
+                resp = client.chat.complete(
+                    model=FALLBACK_MODEL,
+                    messages=messages,
+                    max_tokens=MAX_TOKENS_PER_REPLY,
+                    temperature=0.3,
+                )
+                logger.info(f"Success with fallback model for session {req.session_id}")
+                return {"reply": resp.choices[0].message.content}
+            except Exception as fallback_error:
+                logger.error(
+                    f"Fallback model also failed for session {req.session_id}: {fallback_error}"
+                )
+                raise HTTPException(
+                    status_code=503,
+                    detail="Service Mistral temporairement saturé. Veuillez réessayer dans quelques minutes.",
+                )
+
+        # Check if it's an authentication/quota error (401, 402, 403)
+        elif any(code in error_str for code in ["401", "402", "403", "auth", "quota", "billing"]):
+            logger.error(
+                f"Authentication/Quota error with Mistral API (session {req.session_id}): {e}"
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="Erreur de configuration Mistral (authentification ou quota). Contactez l'administrateur.",
+            )
+
+        # Other errors
+        else:
+            logger.error(
+                f"Unexpected error with Mistral API (session {req.session_id}): {type(e).__name__}: {e}"
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="Erreur interne du service Mistral. Veuillez réessayer.",
+            )
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint (no auth required)."""
+    now = time.time()
+    window_start = now - 24 * 3600
+
+    # Count requests in the last 24h
+    global_today = len([t for t in _global_usage if t > window_start])
+
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "global_requests_today": global_today,
+        "global_limit": MAX_REQUESTS_PER_DAY_GLOBAL,
+        "sessions_tracked": len(_session_usage),
+    }
+
+
+@app.get("/admin/status")
+async def admin_status(password: str = None):
+    """Admin status endpoint (requires CLASS_PASSWORD)."""
+    if password != CLASS_PASSWORD:
+        logger.warning(f"Failed admin auth attempt")
+        raise HTTPException(status_code=401, detail="Invalid password")
+
+    now = time.time()
+    window_start = now - 24 * 3600
+
+    # Calculate stats
+    global_today = len([t for t in _global_usage if t > window_start])
+    session_stats = {
+        sid: len([t for t in times if t > window_start])
+        for sid, times in _session_usage.items()
+    }
+
+    logger.info(f"Admin status check: {global_today}/{MAX_REQUESTS_PER_DAY_GLOBAL} global requests")
+
+    return {
+        "status": "operational",
+        "timestamp": datetime.now().isoformat(),
+        "global": {
+            "requests_today": global_today,
+            "limit": MAX_REQUESTS_PER_DAY_GLOBAL,
+            "percentage": round(100 * global_today / MAX_REQUESTS_PER_DAY_GLOBAL, 1),
+        },
+        "per_session": {
+            "limit": MAX_REQUESTS_PER_DAY_PER_SESSION,
+            "active_sessions": len(_session_usage),
+            "session_details": session_stats,
+        },
+        "models": {
+            "primary": MODEL_NAME,
+            "fallback": FALLBACK_MODEL,
+        },
+    }
 
 
 # Sert la page de chat statique
